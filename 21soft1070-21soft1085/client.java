@@ -1,8 +1,5 @@
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
 
@@ -48,4 +45,26 @@ class client {
 
         return Integer.parseInt(port);
     }
+
+
+    public static void pdfFile(Socket serverSocekt){
+        
+    }
+
+
+//Ideas: each request have a number to identify them
+// Or and to have the ability to send files on multiple chunks
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
