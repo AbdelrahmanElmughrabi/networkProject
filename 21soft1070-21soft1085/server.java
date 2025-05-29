@@ -1,20 +1,22 @@
+// Server.java
+// Represents a server registered with the load balancer
 
-public class server {
+import java.net.Socket; // For the server's socket connection
 
-    public static void main(String[] args) {
+public class Server {
 
-        //establish connection woith client
-        // recieve the request or data from client
-        //confirmation send ot the client
+    int port;           // The port number the server listens on
+    String strategy;    // The load balancing strategy used by the server
+    boolean isBusy;     // Whether the server is currently handling a request
+    Socket socket;      // The socket connection to the load balancer
+    long lastFreeTime;  // The last time the server was marked as free
+
+    // Constructor to initialize a Server object
+    public Server(int port, String strategy, boolean isBusy, Socket socket) {
+        this.port = port;                   // Set the server's port
+        this.strategy = strategy;           // Set the server's strategy
+        this.isBusy = isBusy;               // Set the server's busy status
+        this.socket = socket;               // Set the server's socket
+        this.lastFreeTime = System.currentTimeMillis(); // Initialize last free time to now
     }
 }
-//message format
-//joins the
-//establish connection with LB
-//establish connection with client
-//recive or proccess request from client
-
-//The server must recive multiple kinds of requests
-//ways of knowing the request kinds:
-// either the LB tells the server about the request
-// detections same as the one may be used in the client
