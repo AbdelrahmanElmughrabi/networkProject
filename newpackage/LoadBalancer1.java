@@ -36,7 +36,8 @@ public class LoadBalancer1 {
             if (msg.startsWith("JOIN")) {
                 String[] parts = msg.split(" ");
                 int port = Integer.parseInt(parts[1]);
-                String strat = parts.length > 2 ? parts[2] : "static";
+                String strat = parts[2];
+
                 ServerInfo info = new ServerInfo(port, strat, false, s);
                 synchronized (servers) {
                     servers.add(info);

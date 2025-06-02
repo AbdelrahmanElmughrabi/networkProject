@@ -25,27 +25,8 @@ public class main1 {
             }
         });
         lbThread.start();
-
-        // Step 3: Start two servers
-        System.out.println("Starting server 1 on port 7000 with static strategy...");
-        Thread server1Thread = new Thread(() -> {
-            try {
-                Server1.main(new String[]{"7000", "static"});
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        server1Thread.start();
-
-        System.out.println("Starting server 2 on port 7001 with dynamic strategy...");
-        Thread server2Thread = new Thread(() -> {
-            try {
-                Server1.main(new String[]{"7001", "dynamic"});
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        server2Thread.start();
+        
+        Server1.startTwoServers();
 
         // Step 4: Wait for servers to register
         System.out.println("Waiting for servers to register...");

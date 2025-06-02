@@ -77,46 +77,78 @@ public class Server1 {
     // Processes the client's request
     private static String handle(int choice, String type) {
         try {
-            if (choice == 1) { // Directory listing
-                File d = new File(type);
-                if (d.isDirectory()) {
-                    StringBuilder sb = new StringBuilder();
-                    for (File f : d.listFiles()) {
-                        sb.append(f.getName()).append("\n");
-                    }
-                    return sb.toString();
-                }
-                return "Invalid directory";
-            } else if (choice == 2) { // File transfer
-                File f = new File(type);
-                if (f.isFile()) {
-                    StringBuilder sb = new StringBuilder();
-                    try (BufferedReader r = new BufferedReader(new FileReader(f))) {
-                        String l;
-                        while ((l = r.readLine()) != null) {
-                            sb.append(l).append("\n");
+            switch (choice) {
+                case 1: // Directory listing
+                    File d = new File(type);
+                    if (d.isDirectory()) {
+                        StringBuilder sb = new StringBuilder();
+                        for (File f : d.listFiles()) {
+                            sb.append(f.getName()).append("\n");
                         }
+                        return sb.toString();
+                    }
+                    return "Invalid directory";
+
+                case 2: // File transfer
+                    File f = new File(type);
+                    if (f.isFile()) {
+                        StringBuilder sb = new StringBuilder();
+                        try (BufferedReader r = new BufferedReader(new FileReader(f))) {
+                            String l;
+                            while ((l = r.readLine()) != null) {
+                                sb.append(l).append("\n");
+                            }
+                        }
+                        return sb.toString();
+                    }
+                    return "File not found";
+
+                case 3: // Computation
+                    int t = Integer.parseInt(type);
+                    Thread.sleep(t * 1000);
+                    return "Computation done";
+
+                case 4: // Video streaming
+                    int frames = Integer.parseInt(type);
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < frames; i++) {
+                        sb.append("Video frame ").append(i).append("\n");
+                        Thread.sleep(1000);
                     }
                     return sb.toString();
-                }
-                return "File not found";
-            } else if (choice == 3) { // Computation
-                int t = Integer.parseInt(type);
-                Thread.sleep(t * 1000);
-                return "Computation done";
-            } else if (choice == 4) { // Video streaming
-                int t = Integer.parseInt(type);
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < t; i++) {
-                    sb.append("Video frame ").append(i).append("\n");
-                    Thread.sleep(1000);
-                }
-                return sb.toString();
-            } else {
-                return "Invalid choice";
+
+                default:
+                    return "Invalid choice";
             }
         } catch (Exception e) {
             return "Error processing request: " + e.getMessage();
+        }
+    }
+
+    // Starts two server instances on different ports and strategies
+    public static void startTwoServers() {
+        int port = 7000;
+        String[] Strategy = {"static", "dynamic"};
+
+        System.out.println("Starting server 1 on port 7000 with static strategy...");
+        for (int i = 0; i < 2; i++) {
+            String currentStrategy;
+            if (port % 2 == 0) {
+                currentStrategy = Strategy[0];
+            } else {
+                currentStrategy = Strategy[1];
+            }
+            String portStr = String.valueOf(port);
+            Thread serverThread = new Thread(() -> {
+                try {
+                    // Increment port for each server
+                    Server1.main(new String[]{portStr, currentStrategy});
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+            serverThread.start();
+            port++;
         }
     }
 }
