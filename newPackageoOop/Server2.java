@@ -1,20 +1,23 @@
-package newpackage;
+package newPackageoOop;
 
 import java.io.*;
 import java.net.*;
 
-public class Server1 {
+public class Server2 {
 
-    public static void main(String[] args) throws IOException {
-        if (args.length < 2) {
-            System.out.println("Usage: java Server1 <port> <strategy>");
-            return;
-        }
-        int port = Integer.parseInt(args[0]);
-        String strategy = args[1];
+    private int port;
+    private String strategy;
+    private Socket lbSocket;
+    private ServerSocket serverSocket;
 
+    public Server2(int port, String strategy) {
+        this.port = port;
+        this.strategy = strategy;
+    }
+
+    public void start() throws IOException {
         // Register with the load balancer
-        Socket lbSocket = new Socket("localhost", 6789);
+        lbSocket = new Socket("localhost", 6789);
         DataOutputStream outToLb = new DataOutputStream(lbSocket.getOutputStream());
         outToLb.writeBytes("JOIN " + port + " " + strategy + "\n");
         outToLb.flush();
@@ -26,13 +29,13 @@ public class Server1 {
             return;
         }
 
-        ServerSocket serverSocket = new ServerSocket(port);
+        serverSocket = new ServerSocket(port);
         System.out.println("Server listening on port " + port + " with strategy " + strategy);
 
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 Socket clientSocket = serverSocket.accept();
-                new Thread(() -> handleClient(clientSocket, lbSocket)).start();
+                new Thread(() -> handleClient(clientSocket)).start();
             } catch (SocketException e) {
                 if (Thread.currentThread().isInterrupted()) {
                     break;
@@ -45,7 +48,7 @@ public class Server1 {
     }
 
     // Handles a single client connection
-    private static void handleClient(Socket clientSocket, Socket lbSocket) {
+    private void handleClient(Socket clientSocket) {
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
@@ -75,7 +78,7 @@ public class Server1 {
     }
 
     // Processes the client's request
-    private static String handle(int choice, String type) {
+    private String handle(int choice, String type) {
         try {
             switch (choice) {
                 case 1: // Directory listing
@@ -141,8 +144,7 @@ public class Server1 {
             String portStr = String.valueOf(port);
             Thread serverThread = new Thread(() -> {
                 try {
-                    // Increment port for each server
-                    Server1.main(new String[]{portStr, currentStrategy});
+                    new Server2(Integer.parseInt(portStr), currentStrategy).start();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -151,4 +153,15 @@ public class Server1 {
             port++;
         }
     }
+
+    public static void main(String[] args) throws IOException {
+        if (args.length < 2) {
+            System.out.println("Usage: java Server2 <port> <strategy>");
+            return;
+        }
+        int port = Integer.parseInt(args[0]);
+        String strategy = args[1];
+        new Server2(port, strategy).start();
+    }
+
 }
