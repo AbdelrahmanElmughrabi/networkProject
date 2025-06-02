@@ -3,7 +3,7 @@ package newPackageoOop;
 import java.io.*;
 import java.nio.file.Files;
 
-public class ain2 {
+public class main2 {
 
     public static void main(String[] args) throws Exception {
         // Step 1: Create temporary directory and file
