@@ -8,14 +8,16 @@ public class LoadBalancer2 {
 
     private List<ServerInfo> servers = new ArrayList<>();
     private String strategy = "static";
+    private int port = 6789;
 
-    public LoadBalancer2(String strategy) {
+    public LoadBalancer2(String strategy, int port) {
         this.strategy = strategy;
+        this.port = port;
     }
 
     public void start() throws IOException {
-        ServerSocket ss = new ServerSocket(6789);
-        System.out.println("Load Balancer listening on port 6789 with strategy " + strategy);
+        ServerSocket ss = new ServerSocket(port);
+        System.out.println("Load Balancer listening on port " + port + " with strategy " + strategy);
         while (true) {
             Socket s = ss.accept();
             new Thread(() -> handle(s)).start();
@@ -135,12 +137,25 @@ public class LoadBalancer2 {
     }
 
     public static void main(String[] args) throws IOException {
-        if (args.length < 1) {
-            System.out.println("Usage: java LoadBalancer2 <strategy>");
-            return;
-        }
-        String strategy = args[0];
-        LoadBalancer2 lb = new LoadBalancer2(strategy);
-        lb.start();
+        // Start both static and dynamic load balancers on different ports
+        Thread staticLb = new Thread(() -> {
+            try {
+                LoadBalancer2 lb = new LoadBalancer2("static", 6789);
+                lb.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        staticLb.start();
+
+        Thread dynamicLb = new Thread(() -> {
+            try {
+                LoadBalancer2 lb = new LoadBalancer2("dynamic", 6790);
+                lb.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        dynamicLb.start();
     }
 }

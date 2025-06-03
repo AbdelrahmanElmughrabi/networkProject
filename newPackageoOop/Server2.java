@@ -9,15 +9,21 @@ public class Server2 {
     private String strategy;
     private Socket lbSocket;
     private ServerSocket serverSocket;
+    private int lbPort; // Add this field
 
     public Server2(int port, String strategy) {
+        this(port, strategy, strategy.equals("static") ? 6789 : 6790); // Default LB port by strategy
+    }
+
+    public Server2(int port, String strategy, int lbPort) {
         this.port = port;
         this.strategy = strategy;
+        this.lbPort = lbPort;
     }
 
     public void start() throws IOException {
         // Register with the load balancer
-        lbSocket = new Socket("localhost", 6789);
+        lbSocket = new Socket("localhost", lbPort);
         DataOutputStream outToLb = new DataOutputStream(lbSocket.getOutputStream());
         outToLb.writeBytes("JOIN " + port + " " + strategy + "\n");
         outToLb.flush();
@@ -132,19 +138,16 @@ public class Server2 {
     public static void startTwoServers() {
         int port = 7000;
         String[] Strategy = {"static", "dynamic"};
+        int[] lbPorts = {6789, 6790};
 
-        System.out.println("Starting server 1 on port 7000 with static strategy...");
+        System.out.println("Starting servers with static and dynamic strategies...");
         for (int i = 0; i < 4; i++) {
-            String currentStrategy;
-            if (port % 2 == 0) {
-                currentStrategy = Strategy[0];
-            } else {
-                currentStrategy = Strategy[1];
-            }
-            String portStr = String.valueOf(port);
+            String currentStrategy = (port % 2 == 0) ? Strategy[0] : Strategy[1];
+            int currentLbPort = (port % 2 == 0) ? lbPorts[0] : lbPorts[1];
+            int currentPort = port;
             Thread serverThread = new Thread(() -> {
                 try {
-                    new Server2(Integer.parseInt(portStr), currentStrategy).start();
+                    new Server2(currentPort, currentStrategy, currentLbPort).start();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

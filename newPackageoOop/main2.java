@@ -15,26 +15,6 @@ public class main2 {
         String dirPath = tempDir.getAbsolutePath();
         String filePath = tempFile.getAbsolutePath();
 
-        // Step 2: Start the load balancer (static strategy)
-        System.out.println("Starting load balancer with static strategy on port 6789...");
-        Thread LbStaticThread = new Thread(() -> {
-            try {
-                LoadBalancer2.main(new String[]{"static"});
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        LbStaticThread.start();
-
-        Thread LbDynamicThread = new Thread(() -> {
-            try {
-                LoadBalancer2.main(new String[]{"dynamic"});
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        LbDynamicThread.start();
-
         // Start servers
         Server2.startTwoServers();
 
@@ -108,12 +88,12 @@ public class main2 {
         // Step 8: Test dynamic strategy
         System.out.println("\n=== Testing Dynamic Load Balancing Strategy ===");
         System.out.println("Restarting load balancer with dynamic strategy...");
-        LbStaticThread.interrupt();
-        try {
-            LbStaticThread.join();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // LbStaticThread.interrupt();
+        // try {
+        //     LbStaticThread.join();
+        // } catch (InterruptedException e) {
+        //     Thread.currentThread().interrupt();
+        // }
 
         Thread.sleep(5000);
         try {

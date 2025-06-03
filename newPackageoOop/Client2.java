@@ -8,10 +8,16 @@ public class Client2 {
 
     private int choice;
     private String type;
+    private int lbPort = 6789; // Default to static LB
 
     public Client2(int choice, String type) {
+        this(choice, type, 6789); // Default to static
+    }
+
+    public Client2(int choice, String type, int lbPort) {
         this.choice = choice;
         this.type = type;
+        this.lbPort = lbPort;
     }
 
     public String runRequest() throws IOException {
@@ -33,7 +39,7 @@ public class Client2 {
     }
 
     private int getPort(int choice) throws IOException {
-        try (Socket lb = new Socket("localhost", 6789)) {
+        try (Socket lb = new Socket("localhost", lbPort)) {
             DataOutputStream out = new DataOutputStream(lb.getOutputStream());
             BufferedReader in = new BufferedReader(new InputStreamReader(lb.getInputStream()));
             out.writeBytes("REQUEST " + choice + "\n");
@@ -49,7 +55,12 @@ public class Client2 {
     public static void main(String[] args) throws IOException {
         int choice;
         String type;
-        if (args.length >= 2) {
+        int lbPort = 6789; // Default to static
+        if (args.length >= 3) {
+            choice = Integer.parseInt(args[0]);
+            type = args[1];
+            lbPort = Integer.parseInt(args[2]);
+        } else if (args.length >= 2) {
             choice = Integer.parseInt(args[0]);
             type = args[1];
         } else {
@@ -59,8 +70,10 @@ public class Client2 {
             sc.nextLine();
             System.out.println("Enter your specific request:");
             type = sc.nextLine();
+            System.out.println("Enter load balancer port (6789 for static, 6790 for dynamic):");
+            lbPort = Integer.parseInt(sc.nextLine());
         }
-        Client2 client = new Client2(choice, type);
+        Client2 client = new Client2(choice, type, lbPort);
         String response = client.runRequest();
         System.out.println("From Server: " + response);
     }
