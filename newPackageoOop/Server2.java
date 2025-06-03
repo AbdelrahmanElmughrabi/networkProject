@@ -158,10 +158,7 @@ public class Server2 {
     }
 
     public static void main(String[] args) throws IOException {
-        if (args.length < 2) {
-            System.out.println("Usage: java Server2 <port> <strategy>");
-            return;
-        }
+        startTwoServers();
         int port = Integer.parseInt(args[0]);
         String strategy = args[1];
         new Server2(port, strategy).start();

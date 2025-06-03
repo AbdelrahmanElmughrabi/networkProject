@@ -2,24 +2,43 @@ package newPackageoOop;
 
 import java.io.*;
 import java.net.*;
-import java.util.*;
+import java.util.Scanner;
 
+/**
+ * Client2 is a reusable client for sending requests to the load balancer and
+ * servers.
+ */
 public class Client2 {
+
+    private static final int DEFAULT_STATIC_LB_PORT = 6789;
+    private static final int DEFAULT_DYNAMIC_LB_PORT = 6790;
 
     private int choice;
     private String type;
-    private int lbPort = 6789; // Default to static LB
+    private int lbPort;
 
+    /**
+     * Constructs a Client2 with the given request type and value, using the
+     * default static LB port.
+     */
     public Client2(int choice, String type) {
-        this(choice, type, 6789); // Default to static
+        this(choice, type, DEFAULT_STATIC_LB_PORT);
     }
 
+    /**
+     * Constructs a Client2 with the given request type, value, and load
+     * balancer port.
+     */
     public Client2(int choice, String type, int lbPort) {
         this.choice = choice;
         this.type = type;
         this.lbPort = lbPort;
     }
 
+    /**
+     * Sends the request to the server via the load balancer and returns the
+     * response.
+     */
     public String runRequest() throws IOException {
         StringBuilder response = new StringBuilder();
         int port = getPort(choice);
@@ -32,7 +51,7 @@ public class Client2 {
             String line;
             while ((line = in.readLine()) != null) {
                 response.append(line).append("\n");
-                System.out.println("From Server: " + line);
+                // Optionally: log or handle the line here
             }
         }
         return response.toString();
@@ -45,51 +64,49 @@ public class Client2 {
             out.writeBytes("REQUEST " + choice + "\n");
             out.flush();
             String p = in.readLine();
-            if (p.equals("NO_SERVER")) {
+            if ("NO_SERVER".equals(p)) {
                 throw new IOException("No server available");
             }
             return Integer.parseInt(p);
         }
     }
 
-    // Map request type to recommended LB port
-    private static int getDefaultLbPortForChoice(int choice) {
+    /**
+     * Returns the recommended default LB port for a given request type.
+     */
+    public static int getDefaultLbPortForChoice(int choice) {
         switch (choice) {
             case 1: // Directory listing
             case 2: // File transfer
-                return 6789; // static
+                return DEFAULT_STATIC_LB_PORT;
             case 3: // Computation
             case 4: // Video streaming
-                return 6790; // dynamic
+                return DEFAULT_DYNAMIC_LB_PORT;
             default:
-                return 6789; // fallback to static
+                return DEFAULT_STATIC_LB_PORT;
         }
     }
 
-    public static void main(String[] args) throws IOException {
-        int choice;
-        String type;
-        int lbPort;
-        if (args.length >= 3) {
-            choice = Integer.parseInt(args[0]);
-            type = args[1];
-            lbPort = Integer.parseInt(args[2]);
-        } else if (args.length >= 2) {
-            choice = Integer.parseInt(args[0]);
-            type = args[1];
-            lbPort = getDefaultLbPortForChoice(choice);
-        } else {
-            Scanner sc = new Scanner(System.in);
-            System.out.println("Choose your request type:\n1. Directory listing\n2. File transfer\n3. Computation\n4. Video streaming");
-            choice = sc.nextInt();
-            sc.nextLine();
-            System.out.println("Enter your specific request:");
-            type = sc.nextLine();
-            lbPort = getDefaultLbPortForChoice(choice);
-            System.out.println("Automatically selected load balancer port: " + lbPort + " (" + (lbPort == 6789 ? "static" : "dynamic") + ")");
+    public static void main(String[] args) {
+        try (Scanner scanner = new Scanner(System.in)) {
+            System.out.println("Enter request type number:");
+            System.out.println("1 = Directory listing");
+            System.out.println("2 = File transfer");
+            System.out.println("3 = Computation");
+            System.out.println("4 = Video streaming");
+            System.out.print("Choice: ");
+            int choice = Integer.parseInt(scanner.nextLine().trim());
+
+            System.out.print("Enter value (directory path, file path, or number): ");
+            String type = scanner.nextLine().trim();
+
+            int lbPort = getDefaultLbPortForChoice(choice);
+            Client2 client = new Client2(choice, type, lbPort);
+
+            String response = client.runRequest();
+            System.out.println("Server response:\n" + response);
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
         }
-        Client2 client = new Client2(choice, type, lbPort);
-        String response = client.runRequest();
-        System.out.println("From Server: " + response);
     }
 }

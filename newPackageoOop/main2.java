@@ -22,7 +22,7 @@ public class main2 {
         System.out.println("Waiting for servers to register...");
         Thread.sleep(5000);
 
-        // Step 5: Test all request types
+        // Step 5: Test all request types and load balancing
         System.out.println("\n=== Testing Request Types ===");
         try {
             Client2 client = new Client2(1, dirPath);
