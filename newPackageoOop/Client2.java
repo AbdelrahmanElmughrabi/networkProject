@@ -52,10 +52,24 @@ public class Client2 {
         }
     }
 
+    // Map request type to recommended LB port
+    private static int getDefaultLbPortForChoice(int choice) {
+        switch (choice) {
+            case 1: // Directory listing
+            case 2: // File transfer
+                return 6789; // static
+            case 3: // Computation
+            case 4: // Video streaming
+                return 6790; // dynamic
+            default:
+                return 6789; // fallback to static
+        }
+    }
+
     public static void main(String[] args) throws IOException {
         int choice;
         String type;
-        int lbPort = 6789; // Default to static
+        int lbPort;
         if (args.length >= 3) {
             choice = Integer.parseInt(args[0]);
             type = args[1];
@@ -63,6 +77,7 @@ public class Client2 {
         } else if (args.length >= 2) {
             choice = Integer.parseInt(args[0]);
             type = args[1];
+            lbPort = getDefaultLbPortForChoice(choice);
         } else {
             Scanner sc = new Scanner(System.in);
             System.out.println("Choose your request type:\n1. Directory listing\n2. File transfer\n3. Computation\n4. Video streaming");
@@ -70,8 +85,8 @@ public class Client2 {
             sc.nextLine();
             System.out.println("Enter your specific request:");
             type = sc.nextLine();
-            System.out.println("Enter load balancer port (6789 for static, 6790 for dynamic):");
-            lbPort = Integer.parseInt(sc.nextLine());
+            lbPort = getDefaultLbPortForChoice(choice);
+            System.out.println("Automatically selected load balancer port: " + lbPort + " (" + (lbPort == 6789 ? "static" : "dynamic") + ")");
         }
         Client2 client = new Client2(choice, type, lbPort);
         String response = client.runRequest();
