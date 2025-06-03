@@ -32,6 +32,7 @@ public class LoadBalancer2 {
                 s.close();
                 return;
             }
+            //Server Regestration
             if (msg.startsWith("JOIN")) {
                 String[] parts = msg.split(" ");
                 int port = Integer.parseInt(parts[1]);
@@ -44,6 +45,8 @@ public class LoadBalancer2 {
                 out.writeBytes("OK\n");
                 out.flush();
                 new Thread(() -> serverStatus(info)).start();
+
+                //Client Request Handling
             } else if (msg.startsWith("REQUEST")) {
                 ServerInfo selected = selectServer();
                 if (selected != null) {
@@ -91,7 +94,7 @@ public class LoadBalancer2 {
     // Handles status updates from a registered server
     private void serverStatus(ServerInfo srv) {
         try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(srv.sock.getInputStream()));
+            BufferedReader in = new BufferedReader(new InputStreamReader(srv.socket.getInputStream()));
             String msg;
             while ((msg = in.readLine()) != null) {
                 if (msg.equals("FREE")) {
@@ -101,7 +104,7 @@ public class LoadBalancer2 {
                     synchronized (servers) {
                         servers.remove(srv);
                     }
-                    srv.sock.close();
+                    srv.socket.close();
                     break;
                 }
             }
@@ -119,14 +122,14 @@ public class LoadBalancer2 {
         int port;
         String strategy;
         boolean busy;
-        Socket sock;
+        Socket socket;
         long lastFreeTime;
 
         ServerInfo(int p, String s, boolean b, Socket sk) {
             port = p;
             strategy = s;
             busy = b;
-            sock = sk;
+            socket = sk;
             lastFreeTime = System.currentTimeMillis();
         }
     }

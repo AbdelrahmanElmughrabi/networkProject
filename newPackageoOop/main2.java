@@ -17,14 +17,23 @@ public class main2 {
 
         // Step 2: Start the load balancer (static strategy)
         System.out.println("Starting load balancer with static strategy on port 6789...");
-        Thread lbThread = new Thread(() -> {
+        Thread LbStaticThread = new Thread(() -> {
             try {
                 LoadBalancer2.main(new String[]{"static"});
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
-        lbThread.start();
+        LbStaticThread.start();
+
+        Thread LbDynamicThread = new Thread(() -> {
+            try {
+                LoadBalancer2.main(new String[]{"dynamic"});
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        LbDynamicThread.start();
 
         // Start servers
         Server2.startTwoServers();
@@ -99,20 +108,13 @@ public class main2 {
         // Step 8: Test dynamic strategy
         System.out.println("\n=== Testing Dynamic Load Balancing Strategy ===");
         System.out.println("Restarting load balancer with dynamic strategy...");
-        lbThread.interrupt();
+        LbStaticThread.interrupt();
         try {
-            lbThread.join();
+            LbStaticThread.join();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        Thread newLbThread = new Thread(() -> {
-            try {
-                LoadBalancer2.main(new String[]{"dynamic"});
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        newLbThread.start();
+
         Thread.sleep(5000);
         try {
             Client2 client = new Client2(1, dirPath);
