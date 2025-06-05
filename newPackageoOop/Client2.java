@@ -96,17 +96,33 @@ public class Client2 {
             System.out.println("4 = Video streaming");
             System.out.print("Choice: ");
             int choice = Integer.parseInt(scanner.nextLine().trim());
-
-            System.out.print("Enter value (directory path, file path, or number): ");
-            String type = scanner.nextLine().trim();
+            String type = null ;
+            if (choice == 1){
+                System.out.println("Enter directory path:"); 
+                 type = scanner.nextLine().trim(); }
+            else if (choice ==2){
+                System.out.println("Enter file path:"); 
+                 type = scanner.nextLine().trim(); }
+            else if (choice ==3 ){
+                System.out.println("Enter number:"); 
+                 type = scanner.nextLine().trim(); }
+            else if (choice ==4){
+                System.out.println("Enter number:"); 
+                 type = scanner.nextLine().trim(); }
+            else { 
+                System.out.println("Invalid choice");}
+            
+             
 
             int lbPort = getDefaultLbPortForChoice(choice);
             Client2 client = new Client2(choice, type, lbPort);
 
             String response = client.runRequest();
-            System.out.println("Server response:\n" + response);
+            System.out.println("Server response: done\n" + response);
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
 }
+
+

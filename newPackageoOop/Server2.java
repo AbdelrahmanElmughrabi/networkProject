@@ -168,7 +168,7 @@ public class Server2 {
     public static void main(String[] args) throws IOException {
 
         Scanner scn = new Scanner(System.in);
-        System.out.println("Enter the numebr opf server you want to start (1 or 2): ");
+        System.out.println("Enter the numebr of server you want to start (1 or 2): ");
         int serverNum = scn.nextInt();
         startTwoServers(serverNum);
 
