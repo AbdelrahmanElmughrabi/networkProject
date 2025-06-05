@@ -108,7 +108,7 @@ public class Client2 {
                 System.out.println("Enter number of seconds:"); 
                  type = scanner.nextLine().trim(); }
             else if (choice ==4){
-                System.out.println("Enter number :"); 
+                System.out.println("Enter number of frames:"); 
                  type = scanner.nextLine().trim(); }
             else { 
                 System.out.println("Invalid choice");}

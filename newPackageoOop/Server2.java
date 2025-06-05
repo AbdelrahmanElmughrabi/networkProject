@@ -72,13 +72,21 @@ public class Server2 {
             }
             int choice = Integer.parseInt(choiceStr);
             String result = handle(choice, type);
-            out.writeBytes(result + "\n");
-            out.flush();
+            if (choice == 4 && "STREAM".equals(result)) {
+                int frames = Integer.parseInt(type);
+                for (int i = 0; i < frames; i++) {
+                    out.writeBytes("Video frame " + i + "\n");
+                    out.flush();
+                    Thread.sleep(1000); // 1 frame per second
+                }
+            } else {
+                out.writeBytes(result + "\n");
+                out.flush();
+            }
             System.out.println("Processed request (choice=" + choice + ", type=" + type + ") for client " + clientSocket.getRemoteSocketAddress());
             // Notify load balancer this server is free
             DataOutputStream outToLb = new DataOutputStream(lbSocket.getOutputStream());
             outToLb.writeBytes("FREE\n");
-            System.out.println("The server notify the load balancer that server is free.");
             outToLb.flush();
             System.out.println("Notified load balancer that server is free.");
         } catch (Exception e) {
@@ -127,13 +135,7 @@ public class Server2 {
                     return "Computation done";
 
                 case 4: // Video streaming
-                    int frames = Integer.parseInt(type);
-                    StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i < frames; i++) {
-                        sb.append("Video frame ").append(i).append("\n");
-                        Thread.sleep(1000);
-                    }
-                    return sb.toString();
+                    return "STREAM";
 
                 default:
                     return "Invalid choice";
