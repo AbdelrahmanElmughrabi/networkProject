@@ -20,6 +20,7 @@ public class LoadBalancer2 {
         System.out.println("Load Balancer listening on port " + port + " with strategy " + strategy);
         while (true) {
             Socket s = ss.accept();
+            System.out.println("Accepted connection from: " + s.getRemoteSocketAddress());
             new Thread(() -> handle(s)).start();
         }
     }
@@ -34,7 +35,7 @@ public class LoadBalancer2 {
                 s.close();
                 return;
             }
-            //Server Regestration
+            //Server Registration
             if (msg.startsWith("JOIN")) {
                 String[] parts = msg.split(" ");
                 int port = Integer.parseInt(parts[1]);
@@ -46,6 +47,7 @@ public class LoadBalancer2 {
                 }
                 out.writeBytes("OK\n");
                 out.flush();
+                System.out.println("Registered server on port " + port + " with strategy " + strat);
                 new Thread(() -> serverStatus(info)).start();
 
                 //Client Request Handling
@@ -54,8 +56,10 @@ public class LoadBalancer2 {
                 if (selected != null) {
                     selected.busy = true;
                     out.writeBytes(selected.port + "\n");
+                    System.out.println("Assigned client to server on port " + selected.port);
                 } else {
                     out.writeBytes("NO_SERVER\n");
+                    System.out.println("No available server for client request.");
                 }
                 out.flush();
                 s.close();
@@ -64,6 +68,7 @@ public class LoadBalancer2 {
             }
         } catch (Exception e) {
             // Optionally print error
+            System.out.println("Error handling connection: " + e.getMessage());
         }
     }
 
@@ -102,11 +107,13 @@ public class LoadBalancer2 {
                 if (msg.equals("FREE")) {
                     srv.busy = false;
                     srv.lastFreeTime = System.currentTimeMillis();
+                    System.out.println("Server on port " + srv.port + " is now free.");
                 } else if (msg.equals("GOODBYE")) {
                     synchronized (servers) {
                         servers.remove(srv);
                     }
                     srv.socket.close();
+                    System.out.println("Server on port " + srv.port + " has disconnected.");
                     break;
                 }
             }
@@ -115,6 +122,7 @@ public class LoadBalancer2 {
             synchronized (servers) {
                 servers.remove(srv);
             }
+            System.out.println("Lost connection to server on port " + srv.port + ". Removed from pool.");
         }
     }
 

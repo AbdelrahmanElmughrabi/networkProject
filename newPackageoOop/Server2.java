@@ -2,6 +2,7 @@ package newPackageoOop;
 
 import java.io.*;
 import java.net.*;
+import java.util.Scanner;
 
 public class Server2 {
 
@@ -34,6 +35,7 @@ public class Server2 {
             lbSocket.close();
             return;
         }
+        System.out.println("Successfully registered with load balancer on port " + lbPort);
 
         serverSocket = new ServerSocket(port);
         System.out.println("Server listening on port " + port + " with strategy " + strategy);
@@ -41,6 +43,7 @@ public class Server2 {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 Socket clientSocket = serverSocket.accept();
+                System.out.println("Accepted connection from client: " + clientSocket.getRemoteSocketAddress());
                 new Thread(() -> handleClient(clientSocket)).start();
             } catch (SocketException e) {
                 if (Thread.currentThread().isInterrupted()) {
@@ -51,6 +54,7 @@ public class Server2 {
         }
         serverSocket.close();
         lbSocket.close();
+        System.out.println("Server on port " + port + " shutting down.");
     }
 
     // Handles a single client connection
@@ -63,21 +67,25 @@ public class Server2 {
             if (choiceStr == null || type == null) {
                 out.writeBytes("Invalid request\n");
                 out.flush();
+                System.out.println("Received invalid request from client.");
                 return;
             }
             int choice = Integer.parseInt(choiceStr);
             String result = handle(choice, type);
             out.writeBytes(result + "\n");
             out.flush();
+            System.out.println("Processed request (choice=" + choice + ", type=" + type + ") for client " + clientSocket.getRemoteSocketAddress());
             // Notify load balancer this server is free
             DataOutputStream outToLb = new DataOutputStream(lbSocket.getOutputStream());
             outToLb.writeBytes("FREE\n");
             outToLb.flush();
+            System.out.println("Notified load balancer that server is free.");
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             try {
                 clientSocket.close();
+                System.out.println("Closed connection with client.");
             } catch (IOException ignored) {
             }
         }
@@ -135,13 +143,13 @@ public class Server2 {
     }
 
     // Starts two server instances on different ports and strategies
-    public static void startTwoServers() {
+    public static void startTwoServers(int serverNum) {
         int port = 7000;
         String[] Strategy = {"static", "dynamic"};
         int[] lbPorts = {6789, 6790};
 
         System.out.println("Starting servers with static and dynamic strategies...");
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < serverNum; i++) {
             String currentStrategy = (port % 2 == 0) ? Strategy[0] : Strategy[1];
             int currentLbPort = (port % 2 == 0) ? lbPorts[0] : lbPorts[1];
             int currentPort = port;
@@ -158,7 +166,12 @@ public class Server2 {
     }
 
     public static void main(String[] args) throws IOException {
-        startTwoServers();
+
+        Scanner scn = new Scanner(System.in);
+        System.out.println("Enter the numebr opf server you want to start (1 or 2): ");
+        int serverNum = scn.nextInt();
+        startTwoServers(serverNum);
+
         int port = Integer.parseInt(args[0]);
         String strategy = args[1];
         new Server2(port, strategy).start();
