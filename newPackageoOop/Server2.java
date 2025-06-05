@@ -57,91 +57,122 @@ public class Server2 {
         System.out.println("Server on port " + port + " shutting down.");
     }
 
-    // Handles a single client connection
+    // Combined and simplified client handler
     private void handleClient(Socket clientSocket) {
-        try {
+        try (
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
+            DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream())
+        ) {
             String choiceStr = in.readLine();
             String type = in.readLine();
+
             if (choiceStr == null || type == null) {
                 out.writeBytes("Invalid request\n");
                 out.flush();
                 System.out.println("Received invalid request from client.");
                 return;
             }
-            int choice = Integer.parseInt(choiceStr);
-            String result = handle(choice, type);
-            if (choice == 4 && "STREAM".equals(result)) {
-                int frames = Integer.parseInt(type);
-                for (int i = 0; i < frames; i++) {
-                    out.writeBytes("Video frame " + i + "\n");
-                    out.flush();
-                    Thread.sleep(1000); // 1 frame per second
-                }
-            } else {
-                out.writeBytes(result + "\n");
+
+            int choice;
+            try {
+                choice = Integer.parseInt(choiceStr);
+            } catch (NumberFormatException e) {
+                out.writeBytes("Invalid choice format\n");
+                out.flush();
+                System.out.println("Invalid choice format from client.");
+                return;
+            }
+
+            String response = null;
+
+            switch (choice) {
+                case 1: // Directory listing
+                    File dir = new File(type);
+                    if (dir.isDirectory()) {
+                        StringBuilder sb = new StringBuilder();
+                        File[] files = dir.listFiles();
+                        if (files != null) {
+                            for (File f : files) {
+                                sb.append(f.getName()).append("\n");
+                            }
+                        }
+                        response = sb.toString();
+                    } else {
+                        response = "Invalid directory";
+                    }
+                    break;
+
+                case 2: // File transfer
+                    File file = new File(type);
+                    if (file.isFile()) {
+                        StringBuilder sb = new StringBuilder();
+                        try (BufferedReader r = new BufferedReader(new FileReader(file))) {
+                            String line;
+                            while ((line = r.readLine()) != null) {
+                                sb.append(line).append("\n");
+                            }
+                        } catch (IOException e) {
+                            response = "Error reading file: " + e.getMessage();
+                            break;
+                        }
+                        response = sb.toString();
+                    } else {
+                        response = "File not found";
+                    }
+                    break;
+
+                case 3: // Computation
+                    try {
+                        int t = Integer.parseInt(type);
+                        Thread.sleep(t * 1000L);
+                        response = "Computation done";
+                    } catch (NumberFormatException e) {
+                        response = "Invalid computation time";
+                    }
+                    break;
+
+                case 4: // Video streaming
+                    try {
+                        int frames = Integer.parseInt(type);
+                        for (int i = 0; i < frames; i++) {
+                            out.writeBytes("Video frame " + i + "\n");
+                            out.flush();
+                            Thread.sleep(1000);
+                        }
+                    } catch (NumberFormatException e) {
+                        out.writeBytes("Invalid frame count\n");
+                        out.flush();
+                    }
+                    response = null; // Already sent frames
+                    break;
+
+                default:
+                    response = "Invalid choice";
+            }
+
+            if (response != null) {
+                out.writeBytes(response + "\n");
                 out.flush();
             }
-            System.out.println("Processed request (choice=" + choice + ", type=" + type + ") for client " + clientSocket.getRemoteSocketAddress());
+
+            System.out.println("Processed request (choice=" + choiceStr + ", type=" + type + ") for client " + clientSocket.getRemoteSocketAddress());
+
             // Notify load balancer this server is free
-            DataOutputStream outToLb = new DataOutputStream(lbSocket.getOutputStream());
-            outToLb.writeBytes("FREE\n");
-            outToLb.flush();
-            System.out.println("Notified load balancer that server is free.");
+            try {
+                DataOutputStream outToLb = new DataOutputStream(lbSocket.getOutputStream());
+                outToLb.writeBytes("FREE\n");
+                outToLb.flush();
+                System.out.println("Notified load balancer that server is free.");
+            } catch (IOException e) {
+                System.out.println("Failed to notify load balancer: " + e.getMessage());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             try {
                 clientSocket.close();
                 System.out.println("Closed connection with client.");
-            } catch (IOException ignored) {
-            }
-        }
-    }
-
-    // Processes the client's request
-    private String handle(int choice, String type) {
-        try {
-            switch (choice) {
-                case 1: // Directory listing
-                    File d = new File(type);
-                    if (d.isDirectory()) {
-                        StringBuilder sb = new StringBuilder();
-                        for (File f : d.listFiles()) {
-                            sb.append(f.getName()).append("\n");
-                        }
-                        return sb.toString();
-                    }
-                    return "Invalid directory";
-
-                case 2: // File transfer
-                    File f = new File(type);
-                    if (f.isFile()) {
-                        StringBuilder sb = new StringBuilder();
-                        try (BufferedReader r = new BufferedReader(new FileReader(f))) {
-                            String l;
-                            while ((l = r.readLine()) != null) {
-                                sb.append(l).append("\n");
-                            }
-                        }
-                        return sb.toString();
-                    }
-                    return "File not found";
-
-                case 3: // Computation
-                    int t = Integer.parseInt(type);
-                    Thread.sleep(t * 1000);
-                    return "Computation done";
-
-                case 4: // Video streaming
-                    return "STREAM";
-
-                default:
-                    return "Invalid choice";
-            }
-        } catch (Exception e) {
-            return "Error processing request: " + e.getMessage();
+            } catch (IOException ignored) {}
         }
     }
 
