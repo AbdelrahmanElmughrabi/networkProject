@@ -78,6 +78,7 @@ public class Server2 {
             // Notify load balancer this server is free
             DataOutputStream outToLb = new DataOutputStream(lbSocket.getOutputStream());
             outToLb.writeBytes("FREE\n");
+            System.out.println("The server notify the load balancer that server is free.");
             outToLb.flush();
             System.out.println("Notified load balancer that server is free.");
         } catch (Exception e) {
