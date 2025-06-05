@@ -102,12 +102,13 @@ public class Client2 {
                  type = scanner.nextLine().trim(); }
             else if (choice ==2){
                 System.out.println("Enter file path:"); 
-                 type = scanner.nextLine().trim(); }
+                 type = scanner.nextLine().trim(); 
+                 System.out.println("Sending the file");}
             else if (choice ==3 ){
-                System.out.println("Enter number:"); 
+                System.out.println("Enter number of seconds:"); 
                  type = scanner.nextLine().trim(); }
             else if (choice ==4){
-                System.out.println("Enter number:"); 
+                System.out.println("Enter number :"); 
                  type = scanner.nextLine().trim(); }
             else { 
                 System.out.println("Invalid choice");}
