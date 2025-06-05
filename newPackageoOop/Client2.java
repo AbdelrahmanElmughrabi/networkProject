@@ -51,10 +51,10 @@ public class Client2 {
             String line;
             while ((line = in.readLine()) != null) {
                 response.append(line).append("\n");
-                // Optionally: log or handle the line here
+                System.out.println("Received: " + line);
             }
         }
-        return response.toString();
+        return "Video streaming request completed successfully.";
     }
 
     private int getPort(int choice) throws IOException {
@@ -96,34 +96,31 @@ public class Client2 {
             System.out.println("4 = Video streaming");
             System.out.print("Choice: ");
             int choice = Integer.parseInt(scanner.nextLine().trim());
-            String type = null ;
-            if (choice == 1){
-                System.out.println("Enter directory path:"); 
-                 type = scanner.nextLine().trim(); }
-            else if (choice ==2){
-                System.out.println("Enter file path:"); 
-                 type = scanner.nextLine().trim(); 
-                 System.out.println("Sending the file");}
-            else if (choice ==3 ){
-                System.out.println("Enter number of seconds:"); 
-                 type = scanner.nextLine().trim(); }
-            else if (choice ==4){
-                System.out.println("Enter number of frames:"); 
-                 type = scanner.nextLine().trim(); }
-            else { 
-                System.out.println("Invalid choice");}
-            
-             
+            String type = null;
+            if (choice == 1) {
+                System.out.println("Enter directory path:");
+                type = scanner.nextLine().trim();
+            } else if (choice == 2) {
+                System.out.println("Enter file path:");
+                type = scanner.nextLine().trim();
+                System.out.println("Sending the file");
+            } else if (choice == 3) {
+                System.out.println("Enter number of seconds:");
+                type = scanner.nextLine().trim();
+            } else if (choice == 4) {
+                System.out.println("Enter number of frames:");
+                type = scanner.nextLine().trim();
+            } else {
+                System.out.println("Invalid choice");
+            }
 
             int lbPort = getDefaultLbPortForChoice(choice);
             Client2 client = new Client2(choice, type, lbPort);
 
             String response = client.runRequest();
-            System.out.println("Server response: done\n" + response);
+            System.out.println(response);
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
     }
 }
-
-

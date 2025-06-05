@@ -60,9 +60,7 @@ public class Server2 {
     // Combined and simplified client handler
     private void handleClient(Socket clientSocket) {
         try (
-            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream())
-        ) {
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream())) {
             String choiceStr = in.readLine();
             String type = in.readLine();
 
@@ -137,6 +135,7 @@ public class Server2 {
                         for (int i = 0; i < frames; i++) {
                             out.writeBytes("Video frame " + i + "\n");
                             out.flush();
+                            System.out.println("Sent video frame " + i + " to client " + clientSocket.getRemoteSocketAddress());
                             Thread.sleep(1000);
                         }
                     } catch (NumberFormatException e) {
@@ -172,7 +171,8 @@ public class Server2 {
             try {
                 clientSocket.close();
                 System.out.println("Closed connection with client.");
-            } catch (IOException ignored) {}
+            } catch (IOException ignored) {
+            }
         }
     }
 
