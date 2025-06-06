@@ -205,9 +205,11 @@ public class Server2 {
         int serverNum = scn.nextInt();
         startTwoServers(serverNum);
 
-        int port = Integer.parseInt(args[0]);
-        String strategy = args[1];
-        new Server2(port, strategy, LB_PORT).start();
+        if (args.length >= 2) {
+            int port = Integer.parseInt(args[0]);
+            String strategy = args[1];
+            new Server2(port, strategy, LB_PORT).start();
+        }
     }
 
 }
