@@ -7,17 +7,16 @@ import java.util.*;
 public class LoadBalancer2 {
 
     private List<ServerInfo> servers = new ArrayList<>();
-    private String strategy = "static";
-    private int port = 6789;
+    private int port = 6789; // Only one port
 
-    public LoadBalancer2(String strategy, int port) {
-        this.strategy = strategy;
+    // Remove strategy from constructor
+    public LoadBalancer2(int port) {
         this.port = port;
     }
 
     public void start() throws IOException {
         ServerSocket ss = new ServerSocket(port);
-        System.out.println("Load Balancer listening on port " + port + " with strategy " + strategy);
+        System.out.println("Unified Load Balancer listening on port " + port);
         while (true) {
             Socket s = ss.accept();
             System.out.println("Accepted connection from: " + s.getRemoteSocketAddress());
@@ -52,14 +51,35 @@ public class LoadBalancer2 {
 
                 //Client Request Handling
             } else if (msg.startsWith("REQUEST")) {
-                ServerInfo selected = selectServer();
+                // Example: "REQUEST FILE ..." or "REQUEST STREAM ..." etc.
+                String[] parts = msg.split(" ");
+                String requestType = parts.length > 1 ? parts[1].toLowerCase() : "";
+
+                // Decide strategy based on request type
+                String chosenStrategy;
+                switch (requestType) {
+                    case "file":
+                    case "directory":
+                        chosenStrategy = "static";
+                        break;
+                    case "stream":
+                    case "compute":
+                    case "computation":
+                        chosenStrategy = "dynamic";
+                        break;
+                    default:
+                        // Default to static if unknown
+                        chosenStrategy = "static";
+                }
+
+                ServerInfo selected = selectServer(chosenStrategy);
                 if (selected != null) {
                     selected.busy = true;
                     out.writeBytes(selected.port + "\n");
-                    System.out.println("Assigned client to server on port " + selected.port);
+                    System.out.println("Assigned client to server on port " + selected.port + " (" + chosenStrategy + ")");
                 } else {
                     out.writeBytes("NO_SERVER\n");
-                    System.out.println("No available server for client request.");
+                    System.out.println("No available server for client request (" + chosenStrategy + ").");
                 }
                 out.flush();
                 s.close();
@@ -73,28 +93,19 @@ public class LoadBalancer2 {
     }
 
     // Selects a server based on the current load balancing strategy
-    private ServerInfo selectServer() {
+    private ServerInfo selectServer(String strategy) {
         synchronized (servers) {
             List<ServerInfo> free = new ArrayList<>();
             for (ServerInfo srv : servers) {
-                if (!srv.busy) {
+                if (!srv.busy && srv.strategy.equalsIgnoreCase(strategy)) {
                     free.add(srv);
                 }
             }
             if (free.isEmpty()) {
                 return null;
             }
-            if (strategy.equals("static")) {
-                return free.get(0);
-            } else { // dynamic
-                ServerInfo leastUsed = free.get(0);
-                for (ServerInfo s : free) {
-                    if (s.lastFreeTime < leastUsed.lastFreeTime) {
-                        leastUsed = s;
-                    }
-                }
-                return leastUsed;
-            }
+            // For now, return the first free server (improve algorithm later)
+            return free.get(0);
         }
     }
 
@@ -145,25 +156,8 @@ public class LoadBalancer2 {
     }
 
     public static void main(String[] args) throws IOException {
-        // Start both static and dynamic load balancers on different ports
-        Thread staticLb = new Thread(() -> {
-            try {
-                LoadBalancer2 lb = new LoadBalancer2("static", 6789);
-                lb.start();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-        staticLb.start();
-
-        Thread dynamicLb = new Thread(() -> {
-            try {
-                LoadBalancer2 lb = new LoadBalancer2("dynamic", 6790);
-                lb.start();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-        dynamicLb.start();
+        // Start only one unified load balancer
+        LoadBalancer2 lb = new LoadBalancer2(6789);
+        lb.start();
     }
 }

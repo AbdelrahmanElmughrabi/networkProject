@@ -11,9 +11,10 @@ public class Server2 {
     private Socket lbSocket;
     private ServerSocket serverSocket;
     private int lbPort; // Add this field
+    private static final int LB_PORT = 6789; // Unified port
 
     public Server2(int port, String strategy) {
-        this(port, strategy, strategy.equals("static") ? 6789 : 6790); // Default LB port by strategy
+        this(port, strategy, LB_PORT);
     }
 
     public Server2(int port, String strategy, int lbPort) {
@@ -180,16 +181,14 @@ public class Server2 {
     public static void startTwoServers(int serverNum) {
         int port = 7000;
         String[] Strategy = {"static", "dynamic"};
-        int[] lbPorts = {6789, 6790};
 
         System.out.println("Starting servers with static and dynamic strategies...");
         for (int i = 0; i < serverNum; i++) {
             String currentStrategy = (port % 2 == 0) ? Strategy[0] : Strategy[1];
-            int currentLbPort = (port % 2 == 0) ? lbPorts[0] : lbPorts[1];
             int currentPort = port;
             Thread serverThread = new Thread(() -> {
                 try {
-                    new Server2(currentPort, currentStrategy, currentLbPort).start();
+                    new Server2(currentPort, currentStrategy, LB_PORT).start();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -202,13 +201,13 @@ public class Server2 {
     public static void main(String[] args) throws IOException {
 
         Scanner scn = new Scanner(System.in);
-        System.out.println("Enter the numebr of server you want to start (1 or 2): ");
+        System.out.println("Enter the number of servers you want to start (1 or 2): ");
         int serverNum = scn.nextInt();
         startTwoServers(serverNum);
 
         int port = Integer.parseInt(args[0]);
         String strategy = args[1];
-        new Server2(port, strategy).start();
+        new Server2(port, strategy, LB_PORT).start();
     }
 
 }

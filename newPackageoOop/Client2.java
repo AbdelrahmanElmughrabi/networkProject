@@ -10,8 +10,7 @@ import java.util.Scanner;
  */
 public class Client2 {
 
-    private static final int DEFAULT_STATIC_LB_PORT = 6789;
-    private static final int DEFAULT_DYNAMIC_LB_PORT = 6790;
+    private static final int LB_PORT = 6789; // Unified port
 
     private int choice;
     private String type;
@@ -22,7 +21,7 @@ public class Client2 {
      * default static LB port.
      */
     public Client2(int choice, String type) {
-        this(choice, type, DEFAULT_STATIC_LB_PORT);
+        this(choice, type, LB_PORT);
     }
 
     /**
@@ -61,29 +60,31 @@ public class Client2 {
         try (Socket lb = new Socket("localhost", lbPort)) {
             DataOutputStream out = new DataOutputStream(lb.getOutputStream());
             BufferedReader in = new BufferedReader(new InputStreamReader(lb.getInputStream()));
-            out.writeBytes("REQUEST " + choice + "\n");
+            // Send only the request type, not the strategy
+            String requestType;
+            switch (choice) {
+                case 1:
+                    requestType = "file";
+                    break;
+                case 2:
+                    requestType = "file";
+                    break;
+                case 3:
+                    requestType = "compute";
+                    break;
+                case 4:
+                    requestType = "stream";
+                    break;
+                default:
+                    requestType = "file";
+            }
+            out.writeBytes("REQUEST " + requestType + "\n");
             out.flush();
             String p = in.readLine();
             if ("NO_SERVER".equals(p)) {
                 throw new IOException("No server available");
             }
             return Integer.parseInt(p);
-        }
-    }
-
-    /**
-     * Returns the recommended default LB port for a given request type.
-     */
-    public static int getDefaultLbPortForChoice(int choice) {
-        switch (choice) {
-            case 1: // Directory listing
-            case 2: // File transfer
-                return DEFAULT_STATIC_LB_PORT;
-            case 3: // Computation
-            case 4: // Video streaming
-                return DEFAULT_DYNAMIC_LB_PORT;
-            default:
-                return DEFAULT_STATIC_LB_PORT;
         }
     }
 
@@ -112,10 +113,10 @@ public class Client2 {
                 type = scanner.nextLine().trim();
             } else {
                 System.out.println("Invalid choice");
+                return;
             }
 
-            int lbPort = getDefaultLbPortForChoice(choice);
-            Client2 client = new Client2(choice, type, lbPort);
+            Client2 client = new Client2(choice, type, LB_PORT);
 
             String response = client.runRequest();
             System.out.println(response);
