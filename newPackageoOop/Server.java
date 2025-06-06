@@ -4,7 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 
-public class Server2 {
+public class Server {
 
     private int port;
     private String strategy;
@@ -14,12 +14,12 @@ public class Server2 {
     private static final int LB_PORT = 6789;
 
     // Constructs a server with the given port and strategy, using the default LB port
-    public Server2(int port, String strategy) {
+    public Server(int port, String strategy) {
         this(port, strategy, LB_PORT);
     }
 
     // Constructs a server with the given port, strategy, and load balancer port
-    public Server2(int port, String strategy, int lbPort) {
+    public Server(int port, String strategy, int lbPort) {
         this.port = port;
         this.strategy = strategy;
         this.lbPort = lbPort;
@@ -190,7 +190,7 @@ public class Server2 {
             int currentPort = port;
             Thread serverThread = new Thread(() -> {
                 try {
-                    new Server2(currentPort, currentStrategy, LB_PORT).start();
+                    new Server(currentPort, currentStrategy, LB_PORT).start();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -210,7 +210,7 @@ public class Server2 {
         if (args.length >= 2) {
             int port = Integer.parseInt(args[0]);
             String strategy = args[1];
-            new Server2(port, strategy, LB_PORT).start();
+            new Server(port, strategy, LB_PORT).start();
         }
     }
 }

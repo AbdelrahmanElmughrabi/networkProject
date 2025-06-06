@@ -4,7 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 
-public class Client2 {
+public class Client {
 
     private static final int LB_PORT = 6789;
     private int choice;
@@ -12,12 +12,12 @@ public class Client2 {
     private int lbPort;
 
     // Constructs a client with the given request type and value, using the default LB port
-    public Client2(int choice, String type) {
+    public Client(int choice, String type) {
         this(choice, type, LB_PORT);
     }
 
     // Constructs a client with the given request type, value, and load balancer port
-    public Client2(int choice, String type, int lbPort) {
+    public Client(int choice, String type, int lbPort) {
         this.choice = choice;
         this.type = type;
         this.lbPort = lbPort;
@@ -85,7 +85,7 @@ public class Client2 {
                                     : "10";
             threads[i] = new Thread(() -> {
                 try {
-                    Client2 client = new Client2(clientNum, type, LB_PORT);
+                    Client client = new Client(clientNum, type, LB_PORT);
                     String response = client.runRequest();
                     System.out.println("Client finished: " + response);
                 } catch (Exception e) {
@@ -152,7 +152,7 @@ public class Client2 {
                     System.out.println("Invalid choice");
                     return;
                 }
-                Client2 client = new Client2(choice, type, LB_PORT);
+                Client client = new Client(choice, type, LB_PORT);
                 String response = client.runRequest();
                 System.out.println(response);
             } else {

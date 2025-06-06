@@ -4,13 +4,13 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class LoadBalancer2 {
+public class LoadBalancer {
 
     private List<ServerInfo> servers = new ArrayList<>();
     private int port = 6789;
     private int rrIndex = 0;
 
-    public LoadBalancer2(int port) {
+    public LoadBalancer(int port) {
         this.port = port;
     }
 
@@ -183,7 +183,7 @@ public class LoadBalancer2 {
     }
 
     public static void main(String[] args) throws IOException {
-        LoadBalancer2 lb = new LoadBalancer2(6789);
+        LoadBalancer lb = new LoadBalancer(6789);
         lb.start();
     }
 }
