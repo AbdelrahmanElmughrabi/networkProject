@@ -91,10 +91,10 @@ public class Client2 {
     /**
      * Test method to automatically create and run 100 clients.
      */
-    public static void testHundredClients() {
-        int totalClients = 100;
-        Thread[] threads = new Thread[totalClients];
-        for (int i = 0; i < totalClients; i++) {
+    public static void testHundredClients(int numClients) {
+
+        Thread[] threads = new Thread[numClients];
+        for (int i = 0; i < numClients; i++) {
             final int clientNum = i % 4 + 1; // Cycle through 1-4 for different request types
             final String type = (clientNum == 1) ? "testDir"
                     : (clientNum == 2) ? "testFile.txt"
@@ -122,41 +122,52 @@ public class Client2 {
     }
 
     public static void main(String[] args) {
+
+        int x = 0;
         try (Scanner scanner = new Scanner(System.in)) {
-            System.out.println("Enter request type number:");
-            System.out.println("1 = Directory listing");
-            System.out.println("2 = File transfer");
-            System.out.println("3 = Computation");
-            System.out.println("4 = Video streaming");
-            System.out.print("Choice: ");
-            int choice = Integer.parseInt(scanner.nextLine().trim());
-            String type = null;
-            if (choice == 1) {
-                System.out.println("Enter directory path:");
-                type = scanner.nextLine().trim();
-            } else if (choice == 2) {
-                System.out.println("Enter file path:");
-                type = scanner.nextLine().trim();
-                System.out.println("Sending the file");
-            } else if (choice == 3) {
-                System.out.println("Enter number of seconds:");
-                type = scanner.nextLine().trim();
-            } else if (choice == 4) {
-                System.out.println("Enter number of frames:");
-                type = scanner.nextLine().trim();
+
+            System.out.println("Enter 0 to choose an action or 1 to create number of clients:");
+            x = scanner.nextInt();
+
+            if (x == 0) {
+                System.out.println("Enter request type number:");
+                System.out.println("1 = Directory listing");
+                System.out.println("2 = File transfer");
+                System.out.println("3 = Computation");
+                System.out.println("4 = Video streaming");
+                System.out.print("Choice: ");
+                int choice = Integer.parseInt(scanner.nextLine().trim());
+                String type = null;
+                if (choice == 1) {
+                    System.out.println("Enter directory path:");
+                    type = scanner.nextLine().trim();
+                } else if (choice == 2) {
+                    System.out.println("Enter file path:");
+                    type = scanner.nextLine().trim();
+                    System.out.println("Sending the file");
+                } else if (choice == 3) {
+                    System.out.println("Enter number of seconds:");
+                    type = scanner.nextLine().trim();
+                } else if (choice == 4) {
+                    System.out.println("Enter number of frames:");
+                    type = scanner.nextLine().trim();
+                } else {
+                    System.out.println("Invalid choice");
+                    return;
+                }
+
+                Client2 client = new Client2(choice, type, LB_PORT);
+
+                String response = client.runRequest();
+                System.out.println(response);
             } else {
-                System.out.println("Invalid choice");
-                return;
+                System.out.println("Enter number of clients to create (e.g., 100):");
+                int numClients = scanner.nextInt();
+                testHundredClients(numClients);
             }
-
-            Client2 client = new Client2(choice, type, LB_PORT);
-
-            String response = client.runRequest();
-            System.out.println(response);
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
-
-        testHundredClients();
     }
+
 }
