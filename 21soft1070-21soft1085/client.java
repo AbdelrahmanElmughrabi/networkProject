@@ -1,70 +1,168 @@
+package newPackageoOop;
 
-import java.io.*; // For input/output streams
-import java.net.*; // For networking (Socket)
-import java.util.*; // For Scanner
+import networkProject.newPackage2.Client;
+import java.io.*;
+import java.net.*;
+import java.util.Scanner;
 
-// Client Class
 public class Client {
 
-    // Main method: Entry point for the client application
-    public static void main(String[] args) throws IOException {
-        int choice; // To store the user's request type
-        String type; // To store the user's specific request (directory, file, etc.)
-        if (args.length >= 2) { // If arguments are provided via command line
-            choice = Integer.parseInt(args[0]); // Parse the request type
-            type = args[1]; // Get the specific request
-        } else { // If no command line arguments, prompt user for input
-            Scanner scn = new Scanner(System.in); // Scanner for user input
-            System.out.println("Choose your request type:\n1. Directory listing\n2. File transfer\n3. Computation\n4. Video streaming");
-            choice = scn.nextInt(); // Read the request type
-            scn.nextLine(); // Consume the newline character
-            System.out.println("Enter your specific request:");
-            type = scn.nextLine(); // Read the specific request
-        }
-        String response = runRequest(choice, type); // Send the request and get the response
-        System.out.println("From Server: " + response); // Print the server's response
+    private static final int LB_PORT = 6789;
+    private int choice;
+    private String type;
+    private int lbPort;
+
+    // Constructs a client with the given request type and value, using the default LB port
+    public Client(int choice, String type) {
+        this(choice, type, LB_PORT);
     }
 
-    // Sends a request to the server and returns the response as a string
-    public static String runRequest(int choice, String type) throws IOException {
-        StringBuilder response = new StringBuilder(); // To accumulate the server's response
-        int serverPort = getServerPort(choice); // Get the server port from the load balancer
+    // Constructs a client with the given request type, value, and load balancer port
+    public Client(int choice, String type, int lbPort) {
+        this.choice = choice;
+        this.type = type;
+        this.lbPort = lbPort;
+    }
 
-        // Connect to the assigned server
-        try (Socket serverSocket = new Socket("localhost", serverPort)) {
-            DataOutputStream outToServer = new DataOutputStream(serverSocket.getOutputStream()); // For sending data to server
-            BufferedReader inFromServer = new BufferedReader(new InputStreamReader(serverSocket.getInputStream())); // For reading server response
-
-            outToServer.writeBytes(choice + "\n"); // Send the request type
-            outToServer.writeBytes(type + "\n"); // Send the specific request
-            outToServer.flush(); // Ensure data is sent
-
+    // Sends the request to the server via the load balancer and returns the response
+    public String runRequest() throws IOException {
+        StringBuilder response = new StringBuilder();
+        int port = getPort(choice);
+        try (Socket s = new Socket("localhost", port)) {
+            DataOutputStream out = new DataOutputStream(s.getOutputStream());
+            BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
+            out.writeBytes(choice + "\n");
+            out.writeBytes(type + "\n");
+            out.flush();
             String line;
-            // Read each line of the server's response
-            while ((line = inFromServer.readLine()) != null) {
-                response.append(line).append("\n"); // Append to response
-                System.out.println("From Server: " + line); // Print each line as received
+            while ((line = in.readLine()) != null) {
+                response.append(line).append("\n");
+                System.out.println("Received: " + line);
             }
         }
-        return response.toString(); // Return the full response
+        return getChoiceName(choice) + " request completed successfully.";
     }
 
-    // Connects to the load balancer to get an available server port for the request
-    private static int getServerPort(int choice) throws IOException {
-        // Connect to the load balancer on port 6789
-        try (Socket lbSocket = new Socket("localhost", 6789)) {
-            DataOutputStream outToLb = new DataOutputStream(lbSocket.getOutputStream()); // For sending data to load balancer
-            BufferedReader inFromLb = new BufferedReader(new InputStreamReader(lbSocket.getInputStream())); // For reading load balancer response
-
-            outToLb.writeBytes("REQUEST " + choice + "\n"); // Send the request type to load balancer
-            outToLb.flush(); // Ensure data is sent
-            String portStr = inFromLb.readLine(); // Read the assigned server port
-            if (portStr.equals("NO_SERVER")) { // If no server is available
-                throw new IOException("No server available"); // Throw an exception
+    // Requests a server port from the load balancer based on the request type
+    private int getPort(int choice) throws IOException {
+        try (Socket lb = new Socket("localhost", lbPort)) {
+            DataOutputStream out = new DataOutputStream(lb.getOutputStream());
+            BufferedReader in = new BufferedReader(new InputStreamReader(lb.getInputStream()));
+            String requestType;
+            switch (choice) {
+                case 1:
+                    requestType = "file";
+                    break;
+                case 2:
+                    requestType = "file";
+                    break;
+                case 3:
+                    requestType = "compute";
+                    break;
+                case 4:
+                    requestType = "stream";
+                    break;
+                default:
+                    requestType = "file";
             }
-            int serverPort = Integer.parseInt(portStr); // Parse the server port
-            System.out.println("Assigned to server port: " + serverPort); // Print the assigned port
-            return serverPort; // Return the port
+            out.writeBytes("REQUEST " + requestType + "\n");
+            out.flush();
+            String p = in.readLine();
+            if ("NO_SERVER".equals(p)) {
+                throw new IOException("No server available");
+            }
+            return Integer.parseInt(p);
+        }
+    }
+
+    // Runs multiple clients in parallel for testing
+    public static void testHundredClients(int numClients) {
+        Thread[] threads = new Thread[numClients];
+        for (int i = 0; i < numClients; i++) {
+            final int clientNum = i % 4 + 1;
+            final String type = (clientNum == 1) ? "testDir"
+                    : (clientNum == 2) ? "testFile.txt"
+                            : (clientNum == 3) ? "5"
+                                    : "10";
+            threads[i] = new Thread(() -> {
+                try {
+                    Client client = new Client(clientNum, type, LB_PORT);
+                    String response = client.runRequest();
+                    System.out.println("Client finished: " + response);
+                } catch (Exception e) {
+                    System.out.println("Client error: " + e.getMessage());
+                }
+            });
+            threads[i].start();
+        }
+        for (Thread t : threads) {
+            try {
+                t.join();
+            } catch (InterruptedException ignored) {
+            }
+        }
+        System.out.println("All clients finished.");
+    }
+
+    // Returns a descriptive name for the request type
+    private String getChoiceName(int choice) {
+        switch (choice) {
+            case 1:
+                return "Directory listing";
+            case 2:
+                return "File transfer";
+            case 3:
+                return "Computation";
+            case 4:
+                return "Video streaming";
+            default:
+                return "Unknown";
+        }
+    }
+
+    // Entry point for running a single client or multiple clients for testing
+    public static void main(String[] args) {
+        int x = 0;
+        try (Scanner scanner = new Scanner(System.in)) {
+            System.out.println("Enter 0 to choose an action or 1 to create number of clients:");
+            x = scanner.nextInt();
+
+            if (x == 0) {
+                System.out.println("Enter request type number:");
+                System.out.println("1 = Directory listing");
+                System.out.println("2 = File transfer");
+                System.out.println("3 = Computation");
+                System.out.println("4 = Video streaming");
+                System.out.print("Choice: ");
+                int choice = Integer.parseInt(scanner.nextLine().trim());
+                String type = null;
+                if (choice == 1) {
+                    System.out.println("Enter directory path:");
+                    type = scanner.nextLine().trim();
+                } else if (choice == 2) {
+                    System.out.println("Enter file path:");
+                    type = scanner.nextLine().trim();
+                    System.out.println("Sending the file");
+                } else if (choice == 3) {
+                    System.out.println("Enter number of seconds:");
+                    type = scanner.nextLine().trim();
+                } else if (choice == 4) {
+                    System.out.println("Enter number of frames:");
+                    type = scanner.nextLine().trim();
+                } else {
+                    System.out.println("Invalid choice");
+                    return;
+                }
+                Client client = new Client(choice, type, LB_PORT);
+                String response = client.runRequest();
+                System.out.println(response);
+            } else {
+                System.out.println("Enter number of clients to create (e.g., 100):");
+                int numClients = scanner.nextInt();
+                testHundredClients(numClients);
+            }
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 }

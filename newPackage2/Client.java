@@ -1,4 +1,4 @@
-package newPackageoOop;
+package networkProject.newPackage2;
 
 import java.io.*;
 import java.net.*;
