@@ -10,21 +10,23 @@ public class Server2 {
     private String strategy;
     private Socket lbSocket;
     private ServerSocket serverSocket;
-    private int lbPort; // Add this field
-    private static final int LB_PORT = 6789; // Unified port
+    private int lbPort;
+    private static final int LB_PORT = 6789;
 
+    // Constructs a server with the given port and strategy, using the default LB port
     public Server2(int port, String strategy) {
         this(port, strategy, LB_PORT);
     }
 
+    // Constructs a server with the given port, strategy, and load balancer port
     public Server2(int port, String strategy, int lbPort) {
         this.port = port;
         this.strategy = strategy;
         this.lbPort = lbPort;
     }
 
+    // Registers the server with the load balancer and starts listening for clients
     public void start() throws IOException {
-        // Register with the load balancer
         lbSocket = new Socket("localhost", lbPort);
         DataOutputStream outToLb = new DataOutputStream(lbSocket.getOutputStream());
         outToLb.writeBytes("JOIN " + port + " " + strategy + "\n");
@@ -58,7 +60,7 @@ public class Server2 {
         System.out.println("Server on port " + port + " shutting down.");
     }
 
-    // Combined and simplified client handler
+    // Handles a single client request and notifies the load balancer when done
     private void handleClient(Socket clientSocket) {
         try (
                 BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream())) {
@@ -120,7 +122,7 @@ public class Server2 {
                     }
                     break;
 
-                case 3: // Computation
+                case 3: // Computation (simulated by sleeping)
                     try {
                         int t = Integer.parseInt(type);
                         Thread.sleep(t * 1000L);
@@ -130,7 +132,7 @@ public class Server2 {
                     }
                     break;
 
-                case 4: // Video streaming
+                case 4: // Video streaming (simulated by sending frames)
                     try {
                         int frames = Integer.parseInt(type);
                         for (int i = 0; i < frames; i++) {
@@ -177,7 +179,7 @@ public class Server2 {
         }
     }
 
-    // Starts two server instances on different ports and strategies
+    // Starts multiple server instances with alternating strategies
     public static void startTwoServers(int serverNum) {
         int port = 7000;
         String[] Strategy = {"static", "dynamic"};
@@ -198,8 +200,8 @@ public class Server2 {
         }
     }
 
+    // Entry point for starting servers interactively or via command-line arguments
     public static void main(String[] args) throws IOException {
-
         Scanner scn = new Scanner(System.in);
         System.out.println("Enter the number of servers you want to start (1 or 2): ");
         int serverNum = scn.nextInt();
@@ -211,5 +213,4 @@ public class Server2 {
             new Server2(port, strategy, LB_PORT).start();
         }
     }
-
 }

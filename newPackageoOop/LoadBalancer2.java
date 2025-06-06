@@ -7,12 +7,9 @@ import java.util.*;
 public class LoadBalancer2 {
 
     private List<ServerInfo> servers = new ArrayList<>();
-    private int port = 6789; // Only one port
-
-    // Round-robin index for static strategy
+    private int port = 6789;
     private int rrIndex = 0;
 
-    // Remove strategy from constructor
     public LoadBalancer2(int port) {
         this.port = port;
     }
@@ -27,7 +24,7 @@ public class LoadBalancer2 {
         }
     }
 
-    // Handles incoming connections (from servers or clients)
+    // Handles both server registration and client requests
     private void handle(Socket s) {
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
@@ -42,7 +39,6 @@ public class LoadBalancer2 {
                 String[] parts = msg.split(" ");
                 int port = Integer.parseInt(parts[1]);
                 String strat = parts[2];
-
                 ServerInfo info = new ServerInfo(port, strat, false, s);
                 synchronized (servers) {
                     servers.add(info);
@@ -54,11 +50,8 @@ public class LoadBalancer2 {
 
                 //Client Request Handling
             } else if (msg.startsWith("REQUEST")) {
-                // Example: "REQUEST FILE ..." or "REQUEST STREAM ..." etc.
                 String[] parts = msg.split(" ");
                 String requestType = parts.length > 1 ? parts[1].toLowerCase() : "";
-
-                // Decide strategy based on request type
                 String chosenStrategy;
                 switch (requestType) {
                     case "file":
@@ -71,10 +64,8 @@ public class LoadBalancer2 {
                         chosenStrategy = "dynamic";
                         break;
                     default:
-                        // Default to static if unknown
                         chosenStrategy = "static";
                 }
-
                 ServerInfo selected = selectServer(chosenStrategy);
                 if (selected != null) {
                     selected.busy = true;
@@ -90,12 +81,11 @@ public class LoadBalancer2 {
                 s.close();
             }
         } catch (Exception e) {
-            // Optionally print error
             System.out.println("Error handling connection: " + e.getMessage());
         }
     }
 
-    // Selects a server based on the current load balancing strategy
+    // Selects a server based on the request strategy (static: round-robin, dynamic: least-connections)
     private ServerInfo selectServer(String strategy) {
         synchronized (servers) {
             if ("static".equalsIgnoreCase(strategy)) {
@@ -115,7 +105,7 @@ public class LoadBalancer2 {
                 chosen.busy = true;
                 return chosen;
             } else if ("dynamic".equalsIgnoreCase(strategy)) {
-                // Least-connections (with LRU tie-breaker) for dynamic servers
+                // Least-connections for dynamic servers
                 List<ServerInfo> candidates = new ArrayList<>();
                 for (ServerInfo s : servers) {
                     if (!s.busy && "dynamic".equalsIgnoreCase(s.strategy)) {
@@ -143,7 +133,7 @@ public class LoadBalancer2 {
         }
     }
 
-    // Handles status updates from a registered server
+    // Listens for status updates from a registered server (FREE or GOODBYE)
     private void serverStatus(ServerInfo srv) {
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(srv.socket.getInputStream()));
@@ -152,7 +142,6 @@ public class LoadBalancer2 {
                 if (msg.equals("FREE")) {
                     srv.busy = false;
                     srv.lastFreeTime = System.currentTimeMillis();
-                    // Decrement active-connection count (never go below 0)
                     if ("dynamic".equalsIgnoreCase(srv.strategy)) {
                         srv.currentConnections = Math.max(0, srv.currentConnections - 1);
                     }
@@ -167,7 +156,6 @@ public class LoadBalancer2 {
                 }
             }
         } catch (Exception e) {
-            // Remove server if connection is lost
             synchronized (servers) {
                 servers.remove(srv);
             }
@@ -175,7 +163,7 @@ public class LoadBalancer2 {
         }
     }
 
-    // Simple server metadata class
+    // Holds metadata for each registered server
     private static class ServerInfo {
 
         int port;
@@ -183,8 +171,6 @@ public class LoadBalancer2 {
         boolean busy;
         Socket socket;
         long lastFreeTime;
-
-        // For least-connections (dynamic)
         int currentConnections = 0;
 
         ServerInfo(int p, String s, boolean b, Socket sk) {
@@ -197,7 +183,6 @@ public class LoadBalancer2 {
     }
 
     public static void main(String[] args) throws IOException {
-        // Start only one unified load balancer
         LoadBalancer2 lb = new LoadBalancer2(6789);
         lb.start();
     }

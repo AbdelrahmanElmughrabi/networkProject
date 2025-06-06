@@ -4,40 +4,26 @@ import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 
-/**
- * Client2 is a reusable client for sending requests to the load balancer and
- * servers.
- */
 public class Client2 {
 
-    private static final int LB_PORT = 6789; // Unified port
-
+    private static final int LB_PORT = 6789;
     private int choice;
     private String type;
     private int lbPort;
 
-    /**
-     * Constructs a Client2 with the given request type and value, using the
-     * default static LB port.
-     */
+    // Constructs a client with the given request type and value, using the default LB port
     public Client2(int choice, String type) {
         this(choice, type, LB_PORT);
     }
 
-    /**
-     * Constructs a Client2 with the given request type, value, and load
-     * balancer port.
-     */
+    // Constructs a client with the given request type, value, and load balancer port
     public Client2(int choice, String type, int lbPort) {
         this.choice = choice;
         this.type = type;
         this.lbPort = lbPort;
     }
 
-    /**
-     * Sends the request to the server via the load balancer and returns the
-     * response.
-     */
+    // Sends the request to the server via the load balancer and returns the response
     public String runRequest() throws IOException {
         StringBuilder response = new StringBuilder();
         int port = getPort(choice);
@@ -56,11 +42,11 @@ public class Client2 {
         return getChoiceName(choice) + " request completed successfully.";
     }
 
+    // Requests a server port from the load balancer based on the request type
     private int getPort(int choice) throws IOException {
         try (Socket lb = new Socket("localhost", lbPort)) {
             DataOutputStream out = new DataOutputStream(lb.getOutputStream());
             BufferedReader in = new BufferedReader(new InputStreamReader(lb.getInputStream()));
-            // Send only the request type, not the strategy
             String requestType;
             switch (choice) {
                 case 1:
@@ -88,14 +74,11 @@ public class Client2 {
         }
     }
 
-    /**
-     * Test method to automatically create and run 100 clients.
-     */
+    // Runs multiple clients in parallel for testing
     public static void testHundredClients(int numClients) {
-
         Thread[] threads = new Thread[numClients];
         for (int i = 0; i < numClients; i++) {
-            final int clientNum = i % 4 + 1; // Cycle through 1-4 for different request types
+            final int clientNum = i % 4 + 1;
             final String type = (clientNum == 1) ? "testDir"
                     : (clientNum == 2) ? "testFile.txt"
                             : (clientNum == 3) ? "5"
@@ -111,16 +94,16 @@ public class Client2 {
             });
             threads[i].start();
         }
-        // Wait for all threads to finish
         for (Thread t : threads) {
             try {
                 t.join();
             } catch (InterruptedException ignored) {
             }
         }
-        System.out.println("All 100 clients finished.");
+        System.out.println("All clients finished.");
     }
 
+    // Returns a descriptive name for the request type
     private String getChoiceName(int choice) {
         switch (choice) {
             case 1:
@@ -136,11 +119,10 @@ public class Client2 {
         }
     }
 
+    // Entry point for running a single client or multiple clients for testing
     public static void main(String[] args) {
-
         int x = 0;
         try (Scanner scanner = new Scanner(System.in)) {
-
             System.out.println("Enter 0 to choose an action or 1 to create number of clients:");
             x = scanner.nextInt();
 
@@ -170,9 +152,7 @@ public class Client2 {
                     System.out.println("Invalid choice");
                     return;
                 }
-
                 Client2 client = new Client2(choice, type, LB_PORT);
-
                 String response = client.runRequest();
                 System.out.println(response);
             } else {
@@ -184,5 +164,4 @@ public class Client2 {
             System.out.println("Error: " + e.getMessage());
         }
     }
-
 }
