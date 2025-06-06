@@ -53,7 +53,7 @@ public class Client2 {
                 System.out.println("Received: " + line);
             }
         }
-        return "Video streaming request completed successfully.";
+        return getChoiceName(choice) + " request completed successfully.";
     }
 
     private int getPort(int choice) throws IOException {
@@ -119,6 +119,21 @@ public class Client2 {
             }
         }
         System.out.println("All 100 clients finished.");
+    }
+
+    private String getChoiceName(int choice) {
+        switch (choice) {
+            case 1:
+                return "Directory listing";
+            case 2:
+                return "File transfer";
+            case 3:
+                return "Computation";
+            case 4:
+                return "Video streaming";
+            default:
+                return "Unknown";
+        }
     }
 
     public static void main(String[] args) {

@@ -19,7 +19,7 @@ public class LoadBalancer2 {
 
     public void start() throws IOException {
         ServerSocket ss = new ServerSocket(port);
-        System.out.println("Unified Load Balancer listening on port " + port);
+        System.out.println("Load Balancer listening on port " + port);
         while (true) {
             Socket s = ss.accept();
             System.out.println("Accepted connection from: " + s.getRemoteSocketAddress());
