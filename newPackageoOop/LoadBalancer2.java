@@ -9,6 +9,9 @@ public class LoadBalancer2 {
     private List<ServerInfo> servers = new ArrayList<>();
     private int port = 6789; // Only one port
 
+    // Round-robin index for static strategy
+    private int rrIndex = 0;
+
     // Remove strategy from constructor
     public LoadBalancer2(int port) {
         this.port = port;
@@ -95,17 +98,48 @@ public class LoadBalancer2 {
     // Selects a server based on the current load balancing strategy
     private ServerInfo selectServer(String strategy) {
         synchronized (servers) {
-            List<ServerInfo> free = new ArrayList<>();
-            for (ServerInfo srv : servers) {
-                if (!srv.busy && srv.strategy.equalsIgnoreCase(strategy)) {
-                    free.add(srv);
+            if ("static".equalsIgnoreCase(strategy)) {
+                // Round-robin for static servers
+                List<ServerInfo> candidates = new ArrayList<>();
+                for (ServerInfo s : servers) {
+                    if (!s.busy && "static".equalsIgnoreCase(s.strategy)) {
+                        candidates.add(s);
+                    }
                 }
+                if (candidates.isEmpty()) {
+                    return null;
+                }
+                int pick = rrIndex % candidates.size();
+                ServerInfo chosen = candidates.get(pick);
+                rrIndex = (rrIndex + 1) % candidates.size();
+                chosen.busy = true;
+                return chosen;
+            } else if ("dynamic".equalsIgnoreCase(strategy)) {
+                // Least-connections (with LRU tie-breaker) for dynamic servers
+                List<ServerInfo> candidates = new ArrayList<>();
+                for (ServerInfo s : servers) {
+                    if (!s.busy && "dynamic".equalsIgnoreCase(s.strategy)) {
+                        candidates.add(s);
+                    }
+                }
+                if (candidates.isEmpty()) {
+                    return null;
+                }
+                ServerInfo best = candidates.get(0);
+                for (ServerInfo s : candidates) {
+                    if (s.currentConnections < best.currentConnections) {
+                        best = s;
+                    } else if (s.currentConnections == best.currentConnections) {
+                        if (s.lastFreeTime < best.lastFreeTime) {
+                            best = s;
+                        }
+                    }
+                }
+                best.busy = true;
+                best.currentConnections++;
+                return best;
             }
-            if (free.isEmpty()) {
-                return null;
-            }
-            // For now, return the first free server (improve algorithm later)
-            return free.get(0);
+            return null;
         }
     }
 
@@ -118,6 +152,10 @@ public class LoadBalancer2 {
                 if (msg.equals("FREE")) {
                     srv.busy = false;
                     srv.lastFreeTime = System.currentTimeMillis();
+                    // Decrement active-connection count (never go below 0)
+                    if ("dynamic".equalsIgnoreCase(srv.strategy)) {
+                        srv.currentConnections = Math.max(0, srv.currentConnections - 1);
+                    }
                     System.out.println("Server on port " + srv.port + " is now free.");
                 } else if (msg.equals("GOODBYE")) {
                     synchronized (servers) {
@@ -145,6 +183,9 @@ public class LoadBalancer2 {
         boolean busy;
         Socket socket;
         long lastFreeTime;
+
+        // For least-connections (dynamic)
+        int currentConnections = 0;
 
         ServerInfo(int p, String s, boolean b, Socket sk) {
             port = p;

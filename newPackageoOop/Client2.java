@@ -88,6 +88,39 @@ public class Client2 {
         }
     }
 
+    /**
+     * Test method to automatically create and run 100 clients.
+     */
+    public static void testHundredClients() {
+        int totalClients = 100;
+        Thread[] threads = new Thread[totalClients];
+        for (int i = 0; i < totalClients; i++) {
+            final int clientNum = i % 4 + 1; // Cycle through 1-4 for different request types
+            final String type = (clientNum == 1) ? "testDir"
+                    : (clientNum == 2) ? "testFile.txt"
+                            : (clientNum == 3) ? "5"
+                                    : "10";
+            threads[i] = new Thread(() -> {
+                try {
+                    Client2 client = new Client2(clientNum, type, LB_PORT);
+                    String response = client.runRequest();
+                    System.out.println("Client finished: " + response);
+                } catch (Exception e) {
+                    System.out.println("Client error: " + e.getMessage());
+                }
+            });
+            threads[i].start();
+        }
+        // Wait for all threads to finish
+        for (Thread t : threads) {
+            try {
+                t.join();
+            } catch (InterruptedException ignored) {
+            }
+        }
+        System.out.println("All 100 clients finished.");
+    }
+
     public static void main(String[] args) {
         try (Scanner scanner = new Scanner(System.in)) {
             System.out.println("Enter request type number:");
@@ -123,5 +156,7 @@ public class Client2 {
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
+
+        testHundredClients();
     }
 }
